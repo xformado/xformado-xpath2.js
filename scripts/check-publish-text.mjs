@@ -112,9 +112,23 @@ function tarballFiles() {
         cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore']
     });
     const parsed = JSON.parse(out);
-    const files = parsed?.[0]?.files;
+
+    // Two shapes, because npm changed this between majors and the release
+    // workflow installs the newest npm:
+    //
+    //   npm 11 — an array, one entry per packed package:  [ { files: [...] } ]
+    //   npm 12 — an object keyed by package name:         { "@scope/name": { files: [...] } }
+    //
+    // Read whichever is there rather than assuming one. Measured on 11.16.0 and
+    // 12.2.0, both listing the same 131 files for this package.
+    const entry = Array.isArray(parsed) ? parsed[0] : Object.values(parsed ?? {})[0];
+    const files = entry?.files;
     if (!Array.isArray(files) || files.length === 0) {
-        throw new Error('npm pack --dry-run --json listed no files');
+        throw new Error(
+            'npm pack --dry-run --json listed no files — the shape it returned is '
+            + `${Array.isArray(parsed) ? 'an array' : typeof parsed}`
+            + ', and neither form carried a file list'
+        );
     }
     return files.map((f) => f.path);
 }
