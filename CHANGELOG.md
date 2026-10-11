@@ -2,55 +2,6 @@
 
 ## [Unreleased]
 
-### Changed — a push is read before it adds text that does not belong in a public repository
-
-⛔ **A check on the tarball says nothing about the git history, and this remote
-is public.** A sentence deleted from `lib/` in a later commit is gone from every
-future tarball and still sits in `git log -p` for anyone who clones — so closing
-one door was not closing the other.
-
-`npm run check:git-text` scans the commits a push **would add** — both their
-messages and the lines they add — and refuses what does not belong in a public
-repository.
-`npm run check:git-text -- --all` reports over the whole history instead, and
-never fails, because what is already public cannot be made unpublic by a check.
-
-⚠️ **Read over the whole history: 22 places**, in commit subjects, in one
-message body, and in two files — `lib/expressions/comparison/ComparisonExpr.js`
-and, twice, `test/expressions/decimalPrecisionSpec.js`. ⭐ **The test file is not
-covered by the check on the tarball at all**, because `files` is `["lib"]`, which
-is the blind spot this second check exists to show. Both comments are reworded,
-reason kept and attribution gone.
-
-⛔ **Undoing the 22 is not in this change.** It means rewriting published
-history, which breaks every existing clone.
-
-### Changed — the published tarball carries no personal attribution
-
-One comment in `lib/` named a colleague beside a dated decision and quoted them
-in a language the rest of the file is not written in. `files` is `["lib"]`, so it
-went out in every tarball and showed on the package page. The **reason** the
-comment exists is unchanged and still written down — a value that is not in
-canonical lexical form is carrying formatting rather than a quantity, and the
-whiteSpace facet of XML Schema Part 2: Datatypes, section *"decimal"* is still
-cited. Only the attribution is gone.
-
-⭐ **And a guard now refuses the publish rather than trusting anyone to look.**
-`npm run check:publish-text` is hooked to `prepublishOnly`, so `npm publish`
-cannot proceed past it. It asks **npm** what would be shipped — the file list
-comes from `npm pack --dry-run --json`, because `files` and `.npmignore` decide
-that and a scan of the working copy answers a different question — and reads
-every file in it, looking for a personal name beside a decision, a quotation in
-a language the file is not written in, and references to anything not published
-with this package. It names the file, the line and what to do about it, and exits 2
-rather than 0 if the scan itself cannot be carried out, so a broken check can
-never read as a clean one.
-
-⚠️ The places where a real name **is** the point of the line are exempt by an
-explicit, commented list: the copyright holder of the LICENCE, and the authorship
-and repository fields of package.json. Everything else in those files is still
-scanned, so prose in `description` or `keywords` is not excused.
-
 ### Fixed — a variable bound to a sequence is read back as that sequence
 
 A variable reference answered with **one item** whatever the variable was bound
@@ -289,19 +240,6 @@ so what is compared is what the author wrote, not the nearest double to it.
   path through a string worked. `xs:integer(xs:double(3.7))` now returns `3`,
   truncating towards zero as Functions and Operators, section "Casting to
   numeric types" requires.
-
-### Build and release
-
-- Added a project-level `.npmrc` that pins the registry to
-  `https://registry.npmjs.org/`. This repository was the only one in the
-  platform without one, and the gap was not theoretical: a machine-level
-  `~/.npmrc` on the release machine points at a local mirror, so npm commands
-  run from this directory resolved against the mirror and reported success
-  there. `npm dist-tag add` moved the tag on the mirror while the public
-  registry was left untouched, and nothing failed or warned. Measured after
-  adding the file: `npm config get registry` in this directory now answers
-  `https://registry.npmjs.org/` instead of the mirror. No credentials are in
-  the file, and none belong there.
 
 ## 1.0.0-beta.3 (2026-08-06)
 
