@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 1.0.0-beta.4 (2026-10-11)
+
 ### Fixed — a variable bound to a sequence is read back as that sequence
 
 A variable reference answered with **one item** whatever the variable was bound
