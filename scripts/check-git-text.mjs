@@ -51,11 +51,22 @@ const RULES = [
       why: 'a reference to the private planning repository' },
     { name: 'planning tree or phase', pattern: /\b(?:f[aá]za|v[ĺl]na|blok)\s*\d|\bimplementations\/\d{4}-\d{2}-\d{2}/i,
       why: 'an internal planning identifier' },
-    { name: 'Slovak text', pattern: /[ľščťžňďĺŕôäĽŠČŤŽŇĎĹŔÔÄ]/,
+    // ⚠️ `ä` and `ô` are deliberately out: German and French have them too, and
+    // this very check refused a commit message that named them as its subject.
+    { name: 'Slovak text', pattern: /[ľščťžňďĺŕĽŠČŤŽŇĎĹŔ]/,
       why: 'a sentence in a language the repository is not written in' }
 ];
 
 /** A licence names its copyright holder, and an author field is an author. */
+RULES.push({
+    name: 'process prose',
+    // Phrases, not words: "internal" alone is legitimate in this library and
+    // "maintainer" is ordinary open source vocabulary. What is refused is the
+    // phrasing that can only be about how the work is organised.
+    pattern: /\b(?:internal (?:engineering|planning|requirement|finding|text)|engineering (?:text|process|repositor)|private planning|planning (?:document|repositor|tree)|implementation tree|maintainer's decision|requirement identifier|phase name|sign-?off|closeout|backlog item)\b/i,
+    why: 'prose about how the work is organised — a public repository says what changed, not how it was decided'
+});
+
 const IDENTITY = [
     { file: 'LICENSE', pattern: /^\s*\+?\s*Copyright \(c\)/ },
     { file: 'package.json', pattern: /^\s*\+?\s*"(?:name|email|url|type)"\s*:/ }

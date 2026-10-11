@@ -33,7 +33,8 @@
         "test:strict": "TZ=UTC node ./node_modules/mocha/bin/mocha --require ./test/strict-preload.js ./test/**/*Spec.js",
         "check:publish-text": "node ./scripts/check-publish-text.mjs",
         "check:git-text": "node ./scripts/check-git-text.mjs",
-        "check": "npm run check:publish-text && npm run check:git-text"
+        "check": "npm run check:publish-text && npm run check:git-text",
+        "hooks": "git config core.hooksPath .githooks"
     },
     "devDependencies": {
         "chai": "^4.3.3",

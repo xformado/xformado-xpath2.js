@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+#
+# Refuses a push that would add text which does not belong in a public
+# repository. The check exists either way; the hook is what makes it binding.
+#
+# Measured on 2026-10-11: the check was run by hand, printed "Nothing was
+# pushed. Reword the commits above before pushing." — and the push that followed
+# it on the same line went out anyway. A check nobody is forced to obey is a
+# check that reports, not one that holds.
+#
+# Enabled by `git config core.hooksPath .githooks`, which `npm run hooks` does.
+set -euo pipefail
+exec node "$(cd "$(dirname "$0")/.." && pwd)/scripts/check-git-text.mjs"
