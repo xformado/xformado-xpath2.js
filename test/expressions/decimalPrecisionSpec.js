@@ -295,9 +295,8 @@ describe("decimal precision", function() {
             expect(answerOf("a = b", pair('9', '9.0'))).to.equal(true);
         });
 
-        // Ivan, 2026-08-12: a trailing zero is how money is written, so it
-        // must not push the comparison back to text — 9.50 sorts after 10.00
-        // as a string.
+        // A trailing zero is how money is written, so it must not push the
+        // comparison back to text — 9.50 sorts after 10.00 as a string.
         it('a trailing zero does not disqualify: 9.50 < 10.00', function() {
             expect(answerOf("a < b", pair('9.50', '10.00'))).to.equal(true);
         });
@@ -313,8 +312,9 @@ describe("decimal precision", function() {
     // assertion below is a form some plausible-but-wrong pattern would accept
     // as a number, and each states the answer text comparison gives.
     //
-    // Ivan, 2026-08-12: "číslo sa štandardne nepíše do dátového poľa
-    // s vodiacimi nulami, a teda je to formátovaný string."
+    // The reason the pattern is the canonical form and nothing wider: a data
+    // field holding a number does not normally have leading zeros, so a value
+    // that has them was formatted by somebody and is a string.
     describe("an untyped value that is not written as a plain number", function() {
         it('00123 = 123 stays false — a leading zero is formatting', function() {
             expect(answerOf("a = b", pair('00123', '123'))).to.equal(false);

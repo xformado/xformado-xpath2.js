@@ -2,6 +2,30 @@
 
 ## [Unreleased]
 
+### Fixed — a push can no longer ADD internal engineering text, and the history is measured
+
+⛔ **The tarball guard says nothing about the git history, and this remote is
+public.** A sentence deleted from `lib/` in a later commit is gone from every
+future tarball and still sits in `git log -p` for anyone who clones — so closing
+one door was not closing the other.
+
+`npm run check:git-text` scans the commits a push **would add** — both their
+messages and the lines they add — and refuses when it finds internal text.
+`npm run check:git-text -- --all` reports over the whole history instead, and
+never fails, because what is already public cannot be made unpublic by a check.
+
+⚠️ **Measured over all 839 commits: 22 places.** Seven commit subjects carry an
+internal requirement identifier and a phase name; one message body cites the
+private planning repository; and the quoted sentence appears in
+`lib/expressions/comparison/ComparisonExpr.js` and — twice —
+`test/expressions/decimalPrecisionSpec.js`. ⭐ **The test file was not covered by
+the tarball guard at all**, because `files` is `["lib"]`, which is exactly the
+blind spot this second guard exists to show. Both comments are now reworded in
+the working tree, reason kept and attribution gone.
+
+⛔ **Undoing the 22 is not in this change.** It means rewriting published
+history, which breaks every existing clone; it is the maintainer's decision.
+
 ### Fixed — the published tarball no longer carries internal engineering text
 
 One comment in `lib/` named a colleague beside a dated decision and quoted them

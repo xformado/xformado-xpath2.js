@@ -32,6 +32,7 @@
         "test": "TZ=UTC node ./node_modules/mocha/bin/mocha ./test/**/*Spec.js",
         "test:strict": "TZ=UTC node ./node_modules/mocha/bin/mocha --require ./test/strict-preload.js ./test/**/*Spec.js",
         "check:publish-text": "node ./scripts/check-publish-text.mjs",
+        "check:git-text": "node ./scripts/check-git-text.mjs",
         "prepublishOnly": "npm run check:publish-text"
     },
     "devDependencies": {
