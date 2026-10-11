@@ -34,7 +34,7 @@
         "check:publish-text": "node ./scripts/check-publish-text.mjs",
         "check:git-text": "node ./scripts/check-git-text.mjs",
         "check": "npm run check:publish-text && npm run check:git-text",
-        "hooks": "git config core.hooksPath .githooks"
+        "prepare": "git config core.hooksPath .githooks"
     },
     "devDependencies": {
         "chai": "^4.3.3",
