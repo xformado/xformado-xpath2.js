@@ -81,16 +81,37 @@ jobs:
 
       # Reads back from the registry rather than trusting the exit code of the
       # command that made the change — this is what `npm install` actually gets.
+      #
+      # ⚠️ It WAITS, because the registry is not read-your-writes. npm says so
+      # itself at the end of a publish: "Your package is being processed and may
+      # take a few minutes to become available." A single read two seconds after
+      # the publish reported `+ @scope/name@version` therefore saw the previous
+      # version and failed the release — while the release had in fact gone out,
+      # with provenance. A check that reports a good release as a failed one is
+      # worse than no check: the next person stops believing the red mark.
+      #
+      # So the only failure left is the one that is true: the version never
+      # appears. The wait is bounded and the message says what it saw.
       - name: Verify against the public registry
         run: |
           set -euo pipefail
           version="$(node -p "require('./package.json').version")"
           pkg="$(node -p "require('./package.json').name")"
+          reg=https://registry.npmjs.org
+
+          for attempt in $(seq 1 30); do
+            actual="$(npm view "$pkg" dist-tags.latest --registry "$reg" 2>/dev/null || true)"
+            if [ "$actual" = "$version" ]; then
+              echo "latest points at $version (after ${attempt} read(s))."
+              echo "Dist-tags now:"
+              npm dist-tag ls "$pkg" --registry "$reg"
+              exit 0
+            fi
+            echo "read ${attempt}/30: latest is ${actual:-<unreadable>}, waiting for $version"
+            sleep 10
+          done
+
+          echo "::error::latest never became $version — last read was ${actual:-<unreadable>} after five minutes."
           echo "Dist-tags now:"
-          npm dist-tag ls "$pkg" --registry https://registry.npmjs.org
-          actual="$(npm view "$pkg" dist-tags.latest --registry https://registry.npmjs.org)"
-          if [ "$actual" != "$version" ]; then
-            echo "::error::latest is $actual, expected $version."
-            exit 1
-          fi
-          echo "latest now points at $version."
+          npm dist-tag ls "$pkg" --registry "$reg" || true
+          exit 1
