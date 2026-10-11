@@ -62,6 +62,18 @@ jobs:
       # the recommended release. Should that ever stop being true — an
       # experimental build published alongside a stable line — change this tag
       # in the same commit that bumps the version, deliberately.
+      # Run as a step of its own, deliberately NOT as `prepublishOnly`.
+      #
+      # The check reads the output of `npm pack --dry-run --json`, because the
+      # set of published files is decided by `files` and `.npmignore` and a scan
+      # over anything else would be untrue in both directions. A pack cannot be
+      # nested inside a publish: npm does not re-enter the same lifecycle, so
+      # the list comes back empty. Wired as `prepublishOnly` the check therefore
+      # could not measure anything and refused — which is the right answer to an
+      # unmeasurable tarball, and the wrong place to ask the question.
+      - name: Check the tarball carries no internal text
+        run: npm run check:publish-text
+
       - name: Publish
         run: npm publish --provenance --access public --tag latest
         env:
