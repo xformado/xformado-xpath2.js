@@ -101,9 +101,34 @@ const RULES = [
         // vocabulary this library quotes. Deliberately not every accented
         // letter: a published file may legitimately quote a specification
         // example or a test value containing one.
+        //
+        // ⚠️ `ä` and `ô` were in this class and are now out. They belong to
+        // German and French as well, and the test suite quotes a German
+        // sentence from a specification example — "Fängt er auch schon an zu
+        // krähen" — which this rule refused on four lines. A rule that fires on
+        // a legitimate test value teaches people to switch the check off.
         name: 'Slovak text',
-        pattern: /[ľščťžňďĺŕôäĽŠČŤŽŇĎĹŔÔÄ]/g,
+        pattern: /[ľščťžňďĺŕĽŠČŤŽŇĎĹŔ]/g,
         why: 'a sentence in a language the rest of the file is not written in — translate it'
+    },
+    {
+        // ⭐⭐ THE RULE THE OTHERS MISSED, AND IT IS THE ONE THAT MATTERS.
+        //
+        // Every rule above looks for an IDENTIFIER — a number, a name, a path.
+        // The sentence that announced those rules carried none of them and went
+        // out anyway: "a push can no longer add internal engineering text", "the
+        // private planning repository", "it is the maintainer's decision". Prose
+        // about how the work is organised is exactly what does not belong in a
+        // public repository, and it is invisible to a pattern that hunts for
+        // numbers.
+        //
+        // ⚠️ PHRASES, NOT WORDS. "internal" alone is a legitimate word in this
+        // library ("internal representation"), and "maintainer" is ordinary open
+        // source vocabulary. What is refused is the phrase that can only be
+        // about our own process.
+        name: 'process prose',
+        pattern: /\b(?:internal (?:engineering|planning|requirement|finding|text)|engineering (?:text|process|repositor)|private planning|planning (?:document|repositor|tree)|implementation tree|maintainer's decision|requirement identifier|phase name|sign-?off|closeout|backlog item)\b/gi,
+        why: 'prose about how the work is organised — a published file says what changed, not how it was decided'
     }
 ];
 
@@ -133,9 +158,49 @@ function tarballFiles() {
     return files.map((f) => f.path);
 }
 
+/**
+ * Every file git tracks — which is what a public remote shows.
+ *
+ * ⭐ The tarball is the smaller question. `files` is `["lib"]`, so CHANGELOG.md,
+ * the workflows and the whole of `test/` are outside it — and all of them are on
+ * the public remote for anyone to read. Measured: the sentence that announced
+ * this very guard sat in CHANGELOG.md, outside the tarball, invisible to the
+ * scan that was supposed to catch it.
+ */
+function trackedFiles() {
+    const out = execFileSync('git', ['ls-files', '-z'], {
+        cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore']
+    });
+    const files = out.split('\0').filter((f) => f.length > 0 && !BINARY.test(f));
+    if (files.length === 0) throw new Error('git ls-files listed no files');
+    return files;
+}
+
+/** Read as text below, so anything that is not text is left out by name. */
+const BINARY = /\.(?:png|jpe?g|gif|ico|woff2?|ttf|eot|pdf|zip|gz|tgz)$/i;
+
+/**
+ * The two checks themselves, and nothing else.
+ *
+ * ⚠️ A check has to name what it refuses: the patterns below spell out the
+ * vocabulary they look for, so running the check over its own source reports
+ * every pattern as a hit. Measured when the scope widened to the whole
+ * repository: 23 of the 25 hits were these two files describing their own job.
+ *
+ * ⛔ The exemption is by exact path and covers nothing else — not the workflows,
+ * not the tests, not the changelog. Whoever edits these two files is the one
+ * person who already knows what does not belong in a public file.
+ */
+const SELF = new Set([
+    'scripts/check-publish-text.mjs',
+    'scripts/check-git-text.mjs'
+]);
+
+const SCOPE = process.argv.includes('--tarball') ? 'tarball' : 'tracked';
+
 let paths;
 try {
-    paths = tarballFiles();
+    paths = SCOPE === 'tarball' ? tarballFiles() : trackedFiles();
 } catch (e) {
     // ⛔ Exit 2, never 0. A scan that could not run is not a clean scan, and the
     // whole point of this guard is that nobody has to check by eye.
@@ -145,11 +210,12 @@ try {
 
 const hits = [];
 for (const rel of paths) {
+    if (SELF.has(rel)) continue;
     let text;
     try {
         text = readFileSync(join(root, rel), 'utf8');
     } catch (e) {
-        console.error(`check-publish-text: ${rel} is in the tarball and could not be read — ${e.message}`);
+        console.error(`check-publish-text: ${rel} is published and could not be read — ${e.message}`);
         process.exit(2);
     }
     const lines = text.split(/\r?\n/);
@@ -164,10 +230,18 @@ for (const rel of paths) {
     }
 }
 
-console.log(`check-publish-text: ${paths.length} files would be published`);
+console.log(
+    SCOPE === 'tarball'
+        ? `check-publish-text: ${paths.length} files would go out in the tarball`
+        : `check-publish-text: ${paths.length} files are tracked and visible on the remote`
+);
 
 if (hits.length === 0) {
-    console.log('OK — no internal engineering text in the tarball.');
+    console.log(
+        SCOPE === 'tarball'
+            ? 'OK — the tarball carries nothing that does not belong in it.'
+            : 'OK — no file on the remote carries anything that does not belong in a public repository.'
+    );
     process.exit(0);
 }
 

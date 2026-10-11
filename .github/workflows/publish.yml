@@ -71,7 +71,7 @@ jobs:
       # the list comes back empty. Wired as `prepublishOnly` the check therefore
       # could not measure anything and refused — which is the right answer to an
       # unmeasurable tarball, and the wrong place to ask the question.
-      - name: Check the tarball carries no internal text
+      - name: Check what would be published
         run: npm run check:publish-text
 
       - name: Publish

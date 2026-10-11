@@ -2,31 +2,30 @@
 
 ## [Unreleased]
 
-### Fixed — a push can no longer ADD internal engineering text, and the history is measured
+### Changed — a push is read before it adds text that does not belong in a public repository
 
-⛔ **The tarball guard says nothing about the git history, and this remote is
-public.** A sentence deleted from `lib/` in a later commit is gone from every
+⛔ **A check on the tarball says nothing about the git history, and this remote
+is public.** A sentence deleted from `lib/` in a later commit is gone from every
 future tarball and still sits in `git log -p` for anyone who clones — so closing
 one door was not closing the other.
 
 `npm run check:git-text` scans the commits a push **would add** — both their
-messages and the lines they add — and refuses when it finds internal text.
+messages and the lines they add — and refuses what does not belong in a public
+repository.
 `npm run check:git-text -- --all` reports over the whole history instead, and
 never fails, because what is already public cannot be made unpublic by a check.
 
-⚠️ **Measured over all 839 commits: 22 places.** Seven commit subjects carry an
-internal requirement identifier and a phase name; one message body cites the
-private planning repository; and the quoted sentence appears in
-`lib/expressions/comparison/ComparisonExpr.js` and — twice —
-`test/expressions/decimalPrecisionSpec.js`. ⭐ **The test file was not covered by
-the tarball guard at all**, because `files` is `["lib"]`, which is exactly the
-blind spot this second guard exists to show. Both comments are now reworded in
-the working tree, reason kept and attribution gone.
+⚠️ **Read over the whole history: 22 places**, in commit subjects, in one
+message body, and in two files — `lib/expressions/comparison/ComparisonExpr.js`
+and, twice, `test/expressions/decimalPrecisionSpec.js`. ⭐ **The test file is not
+covered by the check on the tarball at all**, because `files` is `["lib"]`, which
+is the blind spot this second check exists to show. Both comments are reworded,
+reason kept and attribution gone.
 
 ⛔ **Undoing the 22 is not in this change.** It means rewriting published
-history, which breaks every existing clone; it is the maintainer's decision.
+history, which breaks every existing clone.
 
-### Fixed — the published tarball no longer carries internal engineering text
+### Changed — the published tarball carries no personal attribution
 
 One comment in `lib/` named a colleague beside a dated decision and quoted them
 in a language the rest of the file is not written in. `files` is `["lib"]`, so it
@@ -41,10 +40,9 @@ cited. Only the attribution is gone.
 cannot proceed past it. It asks **npm** what would be shipped — the file list
 comes from `npm pack --dry-run --json`, because `files` and `.npmignore` decide
 that and a scan of the working copy answers a different question — and reads
-every file in it, looking for internal requirement and finding numbers, a
-personal name beside a decision, references to the private planning repository
-and to planning trees or phases, and sentences in a language the file is not
-written in. It names the file, the line and what to do about it, and exits 2
+every file in it, looking for a personal name beside a decision, a quotation in
+a language the file is not written in, and references to anything not published
+with this package. It names the file, the line and what to do about it, and exits 2
 rather than 0 if the scan itself cannot be carried out, so a broken check can
 never read as a clean one.
 
@@ -347,9 +345,8 @@ expected for some months.
 ### Changed — how this file references things
 
 - **`§` references in older entries below did not mean specification
-  sections.** They referred to numbered sections of an internal planning
-  document that is not published with this package, so they were not
-  resolvable by anyone reading the changelog. They have been replaced with
+  sections.** They pointed at a numbered document that is not published with
+  this package, so nobody reading the changelog could resolve them. They have been replaced with
   plain descriptions of what changed, and are no longer used.
 - References to the XForms 2.0 specification now name the section rather than
   numbering it (`XForms 2.0 → Expressions → Model functions`). XForms 2.0 is a
