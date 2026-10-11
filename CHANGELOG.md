@@ -2,6 +2,42 @@
 
 ## [Unreleased]
 
+### Fixed — a variable bound to a sequence is read back as that sequence
+
+A variable reference answered with **one item** whatever the variable was bound
+to. XPath 2.0 → Expressions → Primary Expressions → Variable References says *"a
+variable reference evaluates to the value to which the variable is bound"*, and a
+value in the data model is a sequence of zero or more items — so a variable bound
+to several nodes was being read back as a single item that happened to hold an
+array.
+
+```
+count($v)   where $v is bound to three nodes     3   (was 1)
+$v/id       the same binding, one step further   the three <id> children
+                                                 (was the error XPTY0019,
+                                                  "the result of a step … contains
+                                                  an atomic value")
+```
+
+Two places had to be repaired together, and repairing either alone leaves the
+other one answering:
+
+- `VarRef` wrapped the bound value in a one-item sequence unconditionally;
+- `createDynamicContext` converted a scope value with the single-value
+  conversion, so an array handed in by a caller became one `xs:string` reading
+  `"[object Element],[object Element]"` before the reference ever saw it. It is
+  now converted item by item — a node passes through, anything else becomes its
+  XML Schema value.
+
+⭐ **Nothing changes for a variable bound to one thing.** A node, a number, a
+string and a boolean each read exactly as before, and a one-item sequence holding
+a node is the same value as the node. A name nothing bound is still the static
+error `XPST0008`, so a host language can still report the author's typo from it.
+
+⚠️ It reaches `pushVariable()` too, which is what the `for` and quantified
+bindings use — those bind one item at a time and so were never affected, but a
+host that pushes a sequence of its own now gets it back.
+
 ### Changed — `xs:decimal` is now an exact decimal type
 
 `xs:decimal` and `xs:integer` no longer hold their value as a binary floating
