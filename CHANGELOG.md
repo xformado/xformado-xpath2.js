@@ -2,6 +2,33 @@
 
 ## [Unreleased]
 
+### Fixed — the published tarball no longer carries internal engineering text
+
+One comment in `lib/` named a colleague beside a dated decision and quoted them
+in a language the rest of the file is not written in. `files` is `["lib"]`, so it
+went out in every tarball and showed on the package page. The **reason** the
+comment exists is unchanged and still written down — a value that is not in
+canonical lexical form is carrying formatting rather than a quantity, and the
+whiteSpace facet of XML Schema Part 2: Datatypes, section *"decimal"* is still
+cited. Only the attribution is gone.
+
+⭐ **And a guard now refuses the publish rather than trusting anyone to look.**
+`npm run check:publish-text` is hooked to `prepublishOnly`, so `npm publish`
+cannot proceed past it. It asks **npm** what would be shipped — the file list
+comes from `npm pack --dry-run --json`, because `files` and `.npmignore` decide
+that and a scan of the working copy answers a different question — and reads
+every file in it, looking for internal requirement and finding numbers, a
+personal name beside a decision, references to the private planning repository
+and to planning trees or phases, and sentences in a language the file is not
+written in. It names the file, the line and what to do about it, and exits 2
+rather than 0 if the scan itself cannot be carried out, so a broken check can
+never read as a clean one.
+
+⚠️ The places where a real name **is** the point of the line are exempt by an
+explicit, commented list: the copyright holder of the LICENCE, and the authorship
+and repository fields of package.json. Everything else in those files is still
+scanned, so prose in `description` or `keywords` is not excused.
+
 ### Fixed — a variable bound to a sequence is read back as that sequence
 
 A variable reference answered with **one item** whatever the variable was bound

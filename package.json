@@ -30,7 +30,9 @@
         "lint": "node ./node_modules/eslint/bin/eslint ./lib/**/*.js",
         "lint:no-caller": "node ./node_modules/eslint/bin/eslint --no-eslintrc --rule '{\"no-caller\": 2}' ./lib/",
         "test": "TZ=UTC node ./node_modules/mocha/bin/mocha ./test/**/*Spec.js",
-        "test:strict": "TZ=UTC node ./node_modules/mocha/bin/mocha --require ./test/strict-preload.js ./test/**/*Spec.js"
+        "test:strict": "TZ=UTC node ./node_modules/mocha/bin/mocha --require ./test/strict-preload.js ./test/**/*Spec.js",
+        "check:publish-text": "node ./scripts/check-publish-text.mjs",
+        "prepublishOnly": "npm run check:publish-text"
     },
     "devDependencies": {
         "chai": "^4.3.3",
